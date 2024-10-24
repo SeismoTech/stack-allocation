@@ -1,0 +1,210 @@
+
+\def\ft{Testing de Scalar Replacement}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Dudas}
+    \begin{itemize}
+    \item ¿Cómo comprobar si la JVM descubre lo que {\it claramente nos parece}
+      un candidato a scalar replacement?
+    \item ¿Deberíamos testear scalar replacemente?
+    \item ¿Deberíamos testear el rendimiento?
+    \item ¿Y ser capaces de detectar regresiones de rendimiento?
+    \item Scalar replacement es una optimización tachada de {\it esquiva}
+      que además depende de inlining que es {\it incierta}
+    \item JMH + inspección visual, de OPS o de GC
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Objetivo}
+    Poder escribir un test (unitario) que compruebe
+    que una sección de código no crea objetos de un juego de clases
+    \onslide<2->{\color{red}(posiblemente tras unas cuantas iteraciones)}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Posible idea: estadísticas de memoria usada}
+    \begin{itemize}
+    \item {\tt MemoryMXBean.getHeapMemoryUsage()}
+      da la cantidad de memoria usada en el heap
+    \item {\tt GarbageCollectorMXBean.getCollectionCount()}
+      da la cantidad de GCs que ha habido
+    \item Combinando ambas podemos ejecutar una sección de código
+      y comprobar que (1) no hubo GC y (2) cómo aumentó la memoria
+    \item Inconveniente:
+      No permite distiguir qué objetos se han creado. Sólo es útil
+      si nuestro objeto es el dominante
+    \item Descarte:
+      los datos de consumo de memoria no se actualizan inmediatamente
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Posible idea: listener de GC}
+    \begin{itemize}
+    \item {\tt GarbageCollectorMXBean.addNotificationListener()}
+      permite escuchar el resultado de cada GC
+    \item {\tt MemoryMXBean.gc()} fuerza un GC
+    \item Combinando ambas se puede hacer una limpieza
+      (forzar un GC y escuchar la información de su fin),
+      ejecutar nuestra sección de código,
+      volver a hacer una limpieza.
+      La basura de la segunda limpieza la habrá creado nuestra sección de código
+    \item Inconveniente:
+      No permite distiguir qué objetos se han creado. Sólo es útil
+      si nuestro objeto es el dominante
+    \item Descarte:
+      la propia medida genera basura, en cantidad que depende mucho del
+      algoritmo de GC
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Posible idea: Monstruo 2: hprof}
+    \begin{itemize}
+    \item {\tt HotSpotDiagnosticMXBean.dumpHeap} permite hacer un volcado
+      de la memoria en formato hprof
+    \item {\tt HeapFactory.createHeap} de NetBeans
+      permite analizar un hprof
+    \item Combinadas dan lugar al siguiente esquema
+      \begin{enumerate}
+      \item Forzamos GC
+      \item Hacemos volcado inicial,
+        contamos el número $I_c$ de instancias de las clases que nos interesan
+        y descartamos el volcado
+      \item Ejecutamos nuestra sección de código
+      \item Hacemos volcado final
+      \item Comprobamos que no ha habido ningún GC
+      \item Contamos en el volcado final el número $F_c$ de instancias de las
+        clases que nos interesan
+      \item $F_c - I_c$ son las instancias creadas
+      \end{enumerate}
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  %\frametitle{\ft}
+  \begin{block}{CRC32: ejemplo de testing}
+    \begin{lstlisting}[language=java]
+@Test void crc32EventuallyDoesNotAllocate() {
+  final byte[] data = new byte[2*4];
+  var chk = new TryAllocationChecker(CRC32.class).verbose();
+  for (int i = 0; i < 25 && !chk.satisfied(); i++) {
+    Bits.le32(data, 0, i);
+    try (var ignored = chk.enter()) {
+      for (int j = 0; j < 10_000; j++) {
+        Bits.le32(data, 4, j);
+        chk.consume(crc32(data));
+      }
+    }
+  }
+  chk.assertSatisfied();
+}
+long crc32(byte[] data) {
+  var her = new CRC32();
+  her.update(data);
+  return her.getValue();
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{CRC32: ejecución testing}
+    \begin{lstlisting}
+AllocationCheckerTest > crc32EventuallyDoesNotAllocate()
+  Allocation: [gcs: 0, instances: CRC32=10066]
+  Allocation: [gcs: 0, instances: CRC32=0]
+  Allocation: [gcs: 0, instances: CRC32=0]
+  Allocation: [gcs: 0, instances: CRC32=0]
+  Reduced: 85899345900000
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{String concat: ejemplo de testing}
+    \begin{lstlisting}[language=java]
+@Test void concatEventuallyDoesNotAllocateStringBuilder() {
+  var chk = new TryAllocationChecker(StringBuilder.class);
+  for (int i = 0; i < 25 && !chk.satisfied(); i++) {
+    try (var ignored = chk.enter()) {
+      for (int j = 0; j < 10_000; j++) {
+        chr.consume(message(i,j));
+      }
+    }
+  }
+  chk.assertSatisfied();
+}
+
+int message(int i, int j) {
+  return ("Esos " + i + " tipos con bigote tienen cara de "
+      + j + " otentotes").length();
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{String concat: ejecución testing}
+    \begin{lstlisting}
+AllocationCheckerTest > concatEventuallyDoesNotAllocateStringBuilder()
+  Allocation: [gcs: 0, instances: StringBuilder=682]
+  Allocation: [gcs: 0, instances: StringBuilder=13]
+  Allocation: [gcs: 0, instances: StringBuilder=13]
+  Allocation: [gcs: 0, instances: StringBuilder=12]
+  Reduced: 2155560
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{StringBuilder: ejemplo de testing}
+    \begin{lstlisting}[language=java]
+int message(int i, int j) {
+  return new StringBuilder()
+    .append("Esos ")
+    .append(i)
+    .append(" tipos con bigote tienen cara de ")
+    .append(j)
+    .append(" otentotes")
+    .toString()
+    .length();
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{String concat: ejecución testing}
+    \begin{lstlisting}
+AllocationCheckerTest > concatEventuallyDoesNotAllocateStringBuilder()
+  Allocation: [gcs: 0, instances: StringBuilder=10634]
+  Allocation: [gcs: 0, instances: StringBuilder=13]
+  Allocation: [gcs: 0, instances: StringBuilder=12]
+  Allocation: [gcs: 0, instances: StringBuilder=12]
+  Reduced: 2155560
+    \end{lstlisting}
+  \end{block}
+\end{frame}

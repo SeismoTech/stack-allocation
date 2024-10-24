@@ -1,0 +1,137 @@
+\documentclass{beamer}
+
+%\includeonlyframes{current}
+%\includeonly{co}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[provide=*,spanish]{babel}
+\usepackage{beramono}
+\usepackage{hyperref}
+\usepackage{graphicx}
+
+\usepackage[dvipsnames]{xcolor}
+\definecolor{keyword}{RGB}{0,63,127}
+\colorlet{mono}{green!20} %Color para el código monomórfico
+\colorlet{poli}{yellow} % Color para el código polimórfico
+
+\usepackage{pgfplots}
+\usepackage{tikz}
+\usetikzlibrary{positioning,fit,arrows,shapes.arrows,matrix,fit,patterns}
+\tikzset{%
+  ptr/.style={%
+    ->,
+    line width=0.3mm
+  }
+}
+
+\usepackage{listings}
+\usepackage{lstlinebgrd}
+\lstdefinelanguage{java}{
+  keywords={
+    abstract,
+    class,
+    extends,
+    final, for,
+    implements, interface,
+    new,
+    private, protected, public,
+    return,
+    this, try,
+    var, void,
+    while},
+  morekeywords={},
+  ndkeywords={shapeof},
+  sensitive=false,
+  comment=[l]{//},
+  morecomment=[s]{/*}{*/},
+  morestring=[b]',
+  morestring=[b]",
+  morestring=[b]`,
+  morecomment=[l][\color{jsoutput}\bfseries]{<<<}
+}
+\lstset{
+  language=java,
+  %backgroundcolor=\color{lightgray},
+  basicstyle=\footnotesize\ttfamily,
+  emphstyle=\underline,
+  keywordstyle=\color{keyword}\bfseries,
+  ndkeywordstyle=\color{red}\bfseries,
+  identifierstyle=\color{black},
+  commentstyle=\color{purple},
+  stringstyle=\color{red},
+  extendedchars=true,
+  showstringspaces=false,
+  showspaces=false,
+  numbers=left,
+  numberstyle=\tiny,
+  numbersep=9pt,
+  xleftmargin=2em,
+  %frame=single,
+  framexleftmargin=1.5em,
+  tabsize=2,
+  breaklines=true,
+  showtabs=false,
+  captionpos=b
+}
+
+\mode<presentation>{
+  %\setbeamertemplate{background canvas}[vertical shading][bottom=red!10,top=blue!10]
+  \usetheme{Boadilla}
+  \usefonttheme[onlysmall]{structurebold}
+}
+
+\title[Stack Allocation]{Stack Allocation\\y otros Monstruos}
+\author[Pedro]{
+  Pedro Palao Gostanza
+}
+\institute{Seismo Technologies}
+\date{2024-10-30}
+
+\defbeamertemplate*{title page}{customized}[1][]{
+  \hbox to\hsize{\hss
+    \begin{minipage}{0.5\textwidth}
+      {\usebeamerfont{title}\color{RoyalPurple}\bfseries\inserttitle\par}
+      \vskip1cm
+      \begin{flushright}
+      \insertauthor\par
+      \insertinstitute\par
+      \vskip1cm
+      \tiny\insertdate\par
+      \end{flushright}
+    \end{minipage}
+    \hss
+    \begin{minipage}{0.5\textwidth}
+      \hbox to\textwidth{\hss\includegraphics[width=0.8\textwidth]{monstruos.jpg}\hss}%
+    \end{minipage}
+    \hss}%
+}
+\begin{document}
+
+\maketitle
+
+\section{Introducción}
+\include{toma-contacto}
+
+\section{Stack Allocation}
+\include{def}
+
+\section{Ejemplo: Hashing}
+\include{hashing}
+
+\section{Testing de Scalar Replacement}
+\include{testing}
+
+\section{Efecto del polimorfismo}
+\include{poli}
+
+\section{Efecto del polimorfismo intrínseco}
+\include{intpoli}
+
+\section{Referencias}
+\include{ref}
+
+\section{Tertulia}
+\include{tertulia}
+
+\end{document}
