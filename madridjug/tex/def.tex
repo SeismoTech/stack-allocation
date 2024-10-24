@@ -63,7 +63,7 @@ long hash(byte[] d) {
       \fill[pattern={north east lines}] (10.7,0) rectangle +(0.3,1);
     }
     \onslide<5->{\draw (0,0.5) node[anchor=west] {Heap};}
-    
+
     \onslide<7-8>{\draw[ptr] (d.south) to[out=270,in=90] (3.1,1.05);}
     \onslide<9>{\draw[ptr] (d.south) to[out=270,in=90] (2.8,1.05);}
     \onslide<7-10>{\draw (4,0.5) node {$\bar d$};}
@@ -136,12 +136,12 @@ long hash(byte[] d) {
       \fill[pattern={north east lines}] (10.7,0) rectangle +(0.3,1);
     }
     \onslide<1->{\draw (0,0.5) node[anchor=west] {Heap};}
-    
+
     \onslide<1->{\draw[ptr] (d.south) to[out=270,in=90] (2.8,1.05);}
     \onslide<1->{\draw (4,0.5) node {$\bar d$};}
     \onslide<1>{\draw[ptr] (h.south) to[out=270,in=90] (10.8,1.05);}
     \onslide<1>{\draw (11.25,0.5) node {$\bar h$};}
-    
+
     \onslide<2->{
       \filldraw[draw=black,fill=green!50] (8,3) rectangle +(0.8,1);
       \fill[pattern={north east lines}] (8,3) rectangle +(0.3,1);
@@ -151,7 +151,7 @@ long hash(byte[] d) {
     \onslide<3->{
       \draw[decorate,decoration={brace,raise=1mm}]
       (5,4) -- (8.8,4) node[midway,above,yshift=2mm] {checksum};
-      
+
       \filldraw[draw=black,fill=green!50] (8.8,3) rectangle +(3,1);
       \draw[draw=black!50]
       (8.8,3)
@@ -174,13 +174,13 @@ long hash(byte[] d) {
   \frametitle{\ft}
   \begin{block}{Implicaciones de colocar objetos completos en la pila}
     \begin{itemize}
-    \item Exige cambios significativos en GC:
+    \item Afecta a detalles importantes en GC:
       \begin{itemize}
-      \item La búsqueda de raíces en la pila tiene que tratar con objetos
-      \item El marcado tiene que tener en cuenta si un objeto está ubicado
-        en la pila
-      \item El barrido no tiene que eliminar la basura en la pila
+      \item Write barriers no tendría efectos sobre los objetos en la pila
+      \item Busqueda de raíces en la pila
+      \item No habría que hacer marcado ni barrido de los objetos en la pila
       \end{itemize}
+    \item Puede verse afectado por desoptimizaciones
     \item Mejora el rendimiento
       \begin{itemize}
       \item Es más sencillo colocar el objeto en la pila
@@ -210,9 +210,9 @@ public interface Checksum {
 }
 public class CRC32 implements Checksum {
   private int crc = 0;
-  
+
   public long getValue() {return (long)crc & 0xffffffffL;}
-  
+
   public void update(byte[] b, int off, int len) {
     crc = updateBytes(crc, b, off, len);
   }
@@ -284,16 +284,16 @@ long hash(byte[] d) {
     \filldraw[draw=black,fill=blue!50] (1.5,0) rectangle +(0.5,1);
     \filldraw[draw=black,fill=blue!50] (6,0) rectangle +(1,1);
     \filldraw[draw=black,fill=blue!50] (8.5,0) rectangle +(1.5,1);
-    
+
     \filldraw[draw=black,fill=blue!50] (2.7,0) rectangle +(2.3,1);
     \fill[pattern={north east lines}] (2.7,0) rectangle +(0.3,1);
     \draw (4,0.5) node {$\bar d$};
     \draw[ptr] (d.south) to[out=270,in=90] (2.8,1.05);
-    
+
     \filldraw[draw=black,fill=blue!50] (10.7,0) rectangle +(1,1);
     \fill[pattern={north east lines}] (10.7,0) rectangle +(0.3,1);
     \draw (11.35,0.5) node {crc};
-    \draw[ptr] (h.south) to[out=270,in=90] (10.8,1.05);    
+    \draw[ptr] (h.south) to[out=270,in=90] (10.8,1.05);
   \end{tikzpicture}
 \end{frame}
 
@@ -331,11 +331,11 @@ long hash(byte[] d) {
     \filldraw[draw=black,fill=blue!50] (1.5,0) rectangle +(0.5,1);
     \filldraw[draw=black,fill=blue!50] (6,0) rectangle +(1,1);
     \filldraw[draw=black,fill=blue!50] (8.5,0) rectangle +(1.5,1);
-    
+
     \filldraw[draw=black,fill=blue!50] (2.7,0) rectangle +(2.3,1);
     \fill[pattern={north east lines}] (2.7,0) rectangle +(0.3,1);
     \draw (4,0.5) node {$\bar d$};
-    \draw[ptr] (d.south) to[out=270,in=90] (2.8,1.05);    
+    \draw[ptr] (d.south) to[out=270,in=90] (2.8,1.05);
   \end{tikzpicture}
 \end{frame}
 
@@ -380,4 +380,4 @@ long hash(byte[] d) {
       Scalar replacement limitado para arrays
     \end{description}
   \end{block}
-\end{frame}    
+\end{frame}

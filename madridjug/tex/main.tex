@@ -26,7 +26,6 @@
 }
 
 \usepackage{listings}
-\usepackage{lstlinebgrd}
 \lstdefinelanguage{java}{
   keywords={
     abstract,
@@ -74,6 +73,13 @@
   showtabs=false,
   captionpos=b
 }
+
+% Paquete dentro de https://github.com/MartinScharrer/lstaddons
+% Tiene un bug que en mi distro no estaba corregido:
+% https://github.com/MartinScharrer/lstaddons/commit/059375e96cdf702cf836c50fcbea920a7aab5752
+% Tuve que tocar /usr/share/texmf-dist/tex/latex/lstaddons/lstlinebgrd.sty
+\usepackage{lstlinebgrd}
+
 
 \mode<presentation>{
   %\setbeamertemplate{background canvas}[vertical shading][bottom=red!10,top=blue!10]

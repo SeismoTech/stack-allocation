@@ -22,6 +22,8 @@ https://github.com/microsoft/openjdk-proposals/blob/main/stack_allocation/Stack_
   - This proposal will not change how escape analysis works in C2, e.g. introduce context sensitive escape analysis. 
 
 Depende de escape-analysis.
+Se controla con la opción `-XX:+DoEscapeAnalysis`.
+Activado por defecto.
 
 Depende de inlining:
 la mejor forma de que un valor no escape es 
@@ -116,6 +118,8 @@ Si se olvida poner `-XX:+PrintCompilation`,
 igualmente `-XX:+PrintInlining` escribirá sus decisiones de inlining
 pero faltará la información de a qué método se refiere.
 
+Con JITWatch también es posible ver esta info.
+
 
 Sobre cómo mostrar el código generado por el JIT
 ----------------------------------------------------------------------
@@ -183,3 +187,11 @@ https://shipilev.net/jvm/anatomy-quarks/18-scalar-replacement/)
 Un ejemplo de cómo usar el *profiler* de GC de JMH para comprobar que
 un código no está reservando memoria y poder deducir, indirectamente,
 que la jvm ha hecho algún tipo de *stack allocation*.
+
+- [Escape Analysis in the HotSpot JIT Compiler](
+https://blogs.oracle.com/javamagazine/post/escape-analysis-in-the-hotspot-jit-compiler)
+
+- [Current state of EA and its uses in the JVM](
+bib/CurrentStateOfEscapeAnalyisAndItsUsesInTheJVM.pdf)
+La presentación de un intento de añadir Stack Allocation a OpenJDK.
+Lo hicieron sobre la versión 11, pero no parece que se haya mergeado.
