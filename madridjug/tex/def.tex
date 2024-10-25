@@ -342,6 +342,23 @@ long hash(byte[] d) {
 
 \begin{frame}[fragile]
   \frametitle{\ft}
+  \begin{block}{Scalar Replacement}
+    \begin{itemize}
+    \item Es una transformación más profunda
+    \item El ámbito de aplicación es más limitado,
+      porque exige que el valor no escape en ningún *sentido*
+    \item No afecta al GC
+    \item Los campos no tienen por qué estar consecutivos,
+      y podrían incluso alojarse en registros del procesador.
+    \item En definitiva es un {\it caso especial} de Stack Allocation
+      pero no una {\it mejora}
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
   \begin{block}{Definiciones}
     \begin{itemize}
     \item Escape Analysis: Determina el ambito dinámico de un objeto
@@ -350,10 +367,6 @@ long hash(byte[] d) {
     \item Stack Allocation: Coloca objetos {\it completos} en la pila.
       Sólo se puede hacer si no sobrevive al método
     \item Scalar Replacement: Coloca los campos de un objeto en la pila.
-      Sólo se puede hacer si no escapa del método (en ningún sentido).
-      Los campos no tienen por qué estar consecutivos, y podrían limitarse
-      a registros del procesador.
-      Es un {\it caso especial} de Stack Allocation pero no una {\it mejora}
     \end{itemize}
   \end{block}
 \end{frame}

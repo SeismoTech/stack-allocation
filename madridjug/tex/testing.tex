@@ -7,7 +7,7 @@
     \begin{itemize}
     \item ¿Cómo comprobar si la JVM descubre lo que {\it claramente nos parece}
       un candidato a scalar replacement?
-    \item ¿Deberíamos testear scalar replacemente?
+    \item ¿Deberíamos testear scalar replacement?
     \item ¿Deberíamos testear el rendimiento?
     \item ¿Y ser capaces de detectar regresiones de rendimiento?
     \item Scalar replacement es una optimización tachada de {\it esquiva}
@@ -99,16 +99,28 @@
 \begin{frame}[fragile]
   %\frametitle{\ft}
   \begin{block}{CRC32: ejemplo de testing}
-    \begin{lstlisting}[language=java]
+    \begin{lstlisting}[
+      language=java,
+      linebackgroundcolor={
+        \ifnum\value{lstnumber}=9\color{green!30}\fi
+        \ifnum\value{lstnumber}=4\color{yellow!50}\fi
+        \ifnum\value{lstnumber}=6\color{yellow!50}\fi
+        \ifnum\value{lstnumber}=7\color{red!30}\fi
+        \ifnum\value{lstnumber}=8\color{red!30}\fi
+        \ifnum\value{lstnumber}=3\color{violet!20}\fi
+        \ifnum\value{lstnumber}=5\color{violet!20}\fi
+        \ifnum\value{lstnumber}=13\color{violet!20}\fi
+      }
+    ]
 @Test void crc32EventuallyDoesNotAllocate() {
   final byte[] data = new byte[2*4];
   var chk = new TryAllocationChecker(CRC32.class).verbose();
   for (int i = 0; i < 25 && !chk.satisfied(); i++) {
-    Bits.le32(data, 0, i);
     try (var ignored = chk.enter()) {
       for (int j = 0; j < 10_000; j++) {
-        Bits.le32(data, 4, j);
-        chk.consume(crc32(data));
+        Bits.le32(data, 0, i); Bits.le32(data, 4, j);
+        chk.consume(
+          crc32(data));
       }
     }
   }

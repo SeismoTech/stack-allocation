@@ -151,7 +151,7 @@ Pipe pipe(Parser par, Marshaler mar) {
   return new PMPipe(par, mar);
 }
 
-class PMPipe {
+class PMPipe implements Pipe {
   Parser par;
   Marshaler mar;
   PMPipe(Parser par, Marshaler mar) {
@@ -322,7 +322,8 @@ long ultrahash3(long d) {
 \begin{frame}[fragile]
   \frametitle{\ft}
   \begin{block}{Ejercicio de clase}
-    ¿{\tt new Integer} o {\tt Integer.valueOf}?
+    ¿{\tt new Integer} o {\tt Integer.valueOf} o nada?
+    \begin{onlyenv}<1>
     \begin{lstlisting}[language=java]
 class IntParser {
   Object parse(String val) {
@@ -330,6 +331,39 @@ class IntParser {
   }
 }
     \end{lstlisting}
+    \end{onlyenv}
+    \begin{onlyenv}<3>
+    \begin{lstlisting}[language=java]
+class IntParser {
+  Object parse(String val) {
+    return Integer.parseInt(val);
+  }
+}
+    \end{lstlisting}
+    \end{onlyenv}
+    \begin{onlyenv}<2,4>
+    \begin{lstlisting}[language=java]
+class IntParser {
+  Object parse(String val) {
+    return Integer.valueOf(Integer.parseInt(val));
+  }
+}
+    \end{lstlisting}
+    \end{onlyenv}
+
+    \begin{visibleenv}<4>
+    \begin{lstlisting}[language=java]
+public class Integer {
+  ...
+  static Integer valueOf(int i) {
+    if (i >= IntegerCache.low && i <= IntegerCache.high)
+        return IntegerCache.cache[i + (-IntegerCache.low)];
+    return new Integer(i);
+  }
+  ...
+}
+    \end{lstlisting}
+    \end{visibleenv}
   \end{block}
 \end{frame}
 

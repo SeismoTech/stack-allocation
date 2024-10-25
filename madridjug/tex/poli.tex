@@ -58,8 +58,8 @@ static final Hashing H2 = new MyHashing2();
 
 long ultrahash2(long d) {
   return
-    h1.hash(d)
-    + h2.hash(d);
+    H1.hash(d)
+    + H2.hash(d);
 }
     \end{lstlisting}
   \end{block}
@@ -155,9 +155,9 @@ static final Hashing H3 = new MyHashing3();
 
 long ultrahash3(long d) {
   return
-    h1.hash(d)
-    + h2.hash(d)
-    + h3.hash(d);
+    H1.hash(d)
+    + H2.hash(d)
+    + H3.hash(d);
 }
     \end{lstlisting}
   \end{block}

@@ -26,17 +26,24 @@
 }
 
 \usepackage{listings}
+% Paquete dentro de https://github.com/MartinScharrer/lstaddons
+% Tiene un bug que en mi distro no estaba corregido:
+% https://github.com/MartinScharrer/lstaddons/commit/059375e96cdf702cf836c50fcbea920a7aab5752
+% Tuve que tocar /usr/share/texmf-dist/tex/latex/lstaddons/lstlinebgrd.sty
+\usepackage{lstlinebgrd}
 \lstdefinelanguage{java}{
   keywords={
     abstract,
     class,
+    do,
     extends,
     final, for,
-    implements, interface,
+    if, implements, interface,
     new,
     private, protected, public,
     return,
-    this, try,
+    static,
+    this, throws, try,
     var, void,
     while},
   morekeywords={},
@@ -73,12 +80,6 @@
   showtabs=false,
   captionpos=b
 }
-
-% Paquete dentro de https://github.com/MartinScharrer/lstaddons
-% Tiene un bug que en mi distro no estaba corregido:
-% https://github.com/MartinScharrer/lstaddons/commit/059375e96cdf702cf836c50fcbea920a7aab5752
-% Tuve que tocar /usr/share/texmf-dist/tex/latex/lstaddons/lstlinebgrd.sty
-\usepackage{lstlinebgrd}
 
 
 \mode<presentation>{
