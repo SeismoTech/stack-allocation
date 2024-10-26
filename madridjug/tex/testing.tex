@@ -98,7 +98,7 @@
 
 \begin{frame}[fragile]
   %\frametitle{\ft}
-  \begin{block}{CRC32: ejemplo de testing}
+  \begin{block}{CRC32: ejemplo de test}
     \begin{lstlisting}[
       language=java,
       linebackgroundcolor={
@@ -137,7 +137,7 @@ long crc32(byte[] data) {
 
 \begin{frame}[fragile]
   \frametitle{\ft}
-  \begin{block}{CRC32: ejecución testing}
+  \begin{block}{CRC32: ejecución test}
     \begin{lstlisting}
 AllocationCheckerTest > crc32EventuallyDoesNotAllocate()
   Allocation: [gcs: 0, instances: CRC32=10066]
@@ -152,7 +152,7 @@ AllocationCheckerTest > crc32EventuallyDoesNotAllocate()
 
 \begin{frame}[fragile]
   \frametitle{\ft}
-  \begin{block}{String concat: ejemplo de testing}
+  \begin{block}{String concat: ejemplo de test}
     \begin{lstlisting}[language=java]
 @Test void concatEventuallyDoesNotAllocateStringBuilder() {
   var chk = new TryAllocationChecker(StringBuilder.class);
@@ -176,7 +176,7 @@ int message(int i, int j) {
 
 \begin{frame}[fragile]
   \frametitle{\ft}
-  \begin{block}{String concat: ejecución testing}
+  \begin{block}{String concat: ejecución test}
     \begin{lstlisting}
 AllocationCheckerTest > concatEventuallyDoesNotAllocateStringBuilder()
   Allocation: [gcs: 0, instances: StringBuilder=682]
@@ -191,7 +191,7 @@ AllocationCheckerTest > concatEventuallyDoesNotAllocateStringBuilder()
 
 \begin{frame}[fragile]
   \frametitle{\ft}
-  \begin{block}{StringBuilder: ejemplo de testing}
+  \begin{block}{StringBuilder: ejemplo de test}
     \begin{lstlisting}[language=java]
 int message(int i, int j) {
   return new StringBuilder()
@@ -209,7 +209,7 @@ int message(int i, int j) {
 
 \begin{frame}[fragile]
   \frametitle{\ft}
-  \begin{block}{String concat: ejecución testing}
+  \begin{block}{String concat: ejecución test}
     \begin{lstlisting}
 AllocationCheckerTest > concatEventuallyDoesNotAllocateStringBuilder()
   Allocation: [gcs: 0, instances: StringBuilder=10634]
@@ -217,6 +217,74 @@ AllocationCheckerTest > concatEventuallyDoesNotAllocateStringBuilder()
   Allocation: [gcs: 0, instances: StringBuilder=12]
   Allocation: [gcs: 0, instances: StringBuilder=12]
   Reduced: 2155560
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Cálculo iterativo: ejemplo de limitaciones}
+    \begin{lstlisting}[language=java]
+long power(long n, long m) {
+  Long p = new Long(0);
+  Long b = new Long(m);
+  while (b.longValue() > 0) {
+    p = new Long(p.longValue() * n);
+    b = new Long(b.longValue() - 1);
+  }
+  return p.longValue();
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Cálculo iterativo: ejecución test}
+    \begin{lstlisting}
+AllocationCheckerTest > powerEventuallyDoesNotAllocate()
+  Allocation: [gcs: 0, instances: Long=193294]
+  Allocation: [gcs: 0, instances: Long=194533]
+  ...
+  Allocation: [gcs: 0, instances: Long=194434]
+
+AllocationCheckerTest > powerEventuallyDoesNotAllocate() FAILED
+  org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{$3n+1$: ejemplo de limitaciones}
+    \begin{lstlisting}[language=java]
+long collatzConjecture(long n) {
+  Long r;
+  if (n % 2 == 0) {
+    r = new Long(n / 2);
+  } else {
+    r = new Long(3*n + 1);
+  }
+  return r.longValue();
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{String concat: ejecución test}
+    \begin{lstlisting}
+AllocationCheckerTest > collatzConjectureEventuallyDoesNotAllocate()
+    Allocation: [gcs: 0, instances: Long=143168]
+    Allocation: [gcs: 0, instances: Long=107360]
+    ...
+    Allocation: [gcs: 0, instances: Long=107293]
+
+AllocationCheckerTest > collatzConjectureEventuallyDoesNotAllocate() FAILED
+    org.opentest4j.AssertionFailedError: expected: <true> but was: <false>
     \end{lstlisting}
   \end{block}
 \end{frame}

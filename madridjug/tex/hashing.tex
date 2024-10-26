@@ -151,18 +151,20 @@ public interface Kernel128 {
 
 
 \begin{frame}[fragile]
-  \frametitle{\ft}
+  %\frametitle{\ft}
   \begin{block}{Hashish: Los kernels se crean a cascoporro}
     \begin{lstlisting}[language=java]
 public abstract class HashingKernel64 implements Hashing {
   protected abstract Kernel64 newKernel();
   public long hash(byte x) {
-    return integral(Bits.ubyte(x), 1);
+    Kernel64 kernel = newKernel();
+    kernel.tail(x, 1, 1);
+    return kernel.hash();
   }
   ...
-  private long integral(long x, int taillen) {
+  public long hash(int x) {
     Kernel64 kernel = newKernel();
-    kernel.tail(x, taillen, taillen);
+    kernel.tail(x, 4, 4);
     return kernel.hash();
   }
   public long hash(long x) {
@@ -171,7 +173,6 @@ public abstract class HashingKernel64 implements Hashing {
     kernel.tail(0, 0, 8);
     return kernel.hash();
   }
-  ...
     \end{lstlisting}
   \end{block}
 \end{frame}
@@ -184,14 +185,13 @@ public abstract class HashingKernel64 implements Hashing {
   ...
 
   public long hash(byte[] xs, int off, int len) {
-    final int W = 8;
     final Kernel64 kernel = newKernel();
-    final int blockno = len / W;
+    final int blockno = len / 8;
     for (int i = 0; i < blockno; i++) {
-      kernel.block(Bits.le64(xs, off + W*i));
+      kernel.block(Bits.le64(xs, off + 8*i));
     }
-    final int taillen = len - W*blockno;
-    kernel.tail(Bits.le64tail(xs, off + W*blockno, taillen), taillen, len);
+    final int taillen = len - 8*blockno;
+    kernel.tail(Bits.le64tail(xs, off + 8*blockno, taillen), taillen, len);
     return kernel.hash();
   }
 }
