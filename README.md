@@ -195,3 +195,36 @@ https://blogs.oracle.com/javamagazine/post/escape-analysis-in-the-hotspot-jit-co
 bib/CurrentStateOfEscapeAnalyisAndItsUsesInTheJVM.pdf)
 La presentación de un intento de añadir Stack Allocation a OpenJDK.
 Lo hicieron sobre la versión 11, pero no parece que se haya mergeado.
+
+- [Improving OpenJDK Scalar Replacement](
+https://devblogs.microsoft.com/java/improving-openjdk-scalar-replacement-part-1-3/)
+Una serie de 3 artículos breves sobre un cambio en C2 para que 
+sea capaz de hacer SR en más ocasiones.
+En particular, cubre los casos en los que un movimiento (retraso) de un nodo Phi
+hace que se pueda aplicar un SR en las ramas que lo preceden por separado.
+Es decir, si tenemos algo como
+```
+if (C) {
+  x = new T(a);
+} else {
+  x = new T(b);
+}
+f(x)
+```
+lo transforman en
+```
+if (C) {
+  x = new T(a);
+  f(x)
+} else {
+  x = new T(b);
+  f(x);
+}
+```
+Esto es algo conocido de siempre y tiene sus riesgos y limitaciones.
+
+[HotSpot Escape Analysis and Scalar Replacement Status](
+https://cr.openjdk.org/~cslucas/escape-analysis/EscapeAnalysis.html)
+Cuenta el estado actual de EA y SR en HotSpot.
+Se centra sobre todo en las limitaciones actuales.
+Tiene muy buenas referencias al final.
