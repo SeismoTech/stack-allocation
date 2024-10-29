@@ -1,0 +1,63 @@
+% En el título:
+% - Voy a hablar de Stack Allocation y otros elementos de la java, más bien de
+% la jvm, que son relevantes, que tienen una interacción, unas veces positiva
+% y otras no tanto, pero veremos cómo soslayar los problemas
+
+\section{Toma de contacto}
+\def\ft{Toma de contacto}
+
+% - Antes de empezar con la chicha, 2 puntualizaciones
+
+% - Hay algo de información, no mucha, sobre SA en la red.
+% Por una parte, hay información muy técnica, relativa a algoritmos de EA o
+% a implementaciones en la JVM.
+% Por otra, hay información muy superficial de la operativa de SA o muy
+% puntual sobre algún detalle.
+% El planteamiento de esta charla es distinto. Nace de la experiencia de
+% intentar aprovechar SA en programas o librerías reales para conseguir
+% una mejora en el código, simultáneamente en rendimiento y en legibilidad.
+
+% - Y ya que hablamos de rendimiento, una definición somera de SA podría ser
+% esta ...
+% Por ahora vamos a destacar la palabra *optimización*.
+% Si una charla habla de mejoras de rendimiento en la JVM, eso mola,
+% porque la gente que trabaja en esas cosas tiene derecho a preocuparse
+% por el rendimiento de nuestros programas.
+% Pero si una charla habla de cómo mejorar el rendimiento de nuestros
+% propios programas, entonces entra en una zona pantanosa,
+% y necesita una pequeña introducción expiatoria
+% porque en otro caso le arrojarán la famosa frase
+% ...
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Definición}
+    Stack Allocation es una
+    \only<1>{optimización}\only<2>{{\bf\color{red} optimización}}
+    por la que un objeto creado con {\tt new~C(...)}
+    se aloja realmente en la pila
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Donald Knuth / Tony Hoare}
+    \visible<2>{We should forget about small efficiencies, say about 97\% of the time:}
+    {\only<2>{\color{gray}}Premature optimization is the root of all evil.}
+    \visible<2>{Yet we should not pass up our opportunities in that critical 3\%}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Diseñar para}
+    \begin{itemize}
+    \item Corrección
+    \item Mantenimiento
+    \item Seguridad
+    \item Testeo
+    \item $\cdots$
+    \visible<2>{\item {\bf Rendimiento}}
+    \end{itemize}
+  \end{block}
+\end{frame}

@@ -1,0 +1,285 @@
+
+\def\ft{Efecto del polimorfismo}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Monstruo 3: el polimorfismo}
+    \begin{itemize}
+    \item Un {\it call site} es un punto de llamada a un método
+    \item Se clasifican en monomórficos, polimórficos y megamórficos
+      en función de la variedad de clases que son destino de esa llamada
+    \item El inlining está limitado por el polimorfismo
+    \item Y el scalar replacement está limitado por el inlining
+    \item Y ... los métodos heredados no cambian de clase
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Clase abstracta}
+    \begin{lstlisting}[
+        language=java,
+        linebackgroundcolor={
+          \ifnum\value{lstnumber}=6\color{poli}\fi
+          \ifnum\value{lstnumber}=7\color{poli}\fi
+          \ifnum\value{lstnumber}=8\color{poli}\fi
+        }
+      ]
+public abstract class HashingKernel64 implements Hashing {
+  protected abstract Kernel64 newKernel();
+  ...
+  public long hash(long x) {
+    final Kernel64 kernel = newKernel();
+    kernel.block(x);
+    kernel.tail(0, 0, 8);
+    return kernel.hash();
+  }
+  ...
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Uso monomórfico (2)}
+    \begin{lstlisting}[
+        language=java,
+        linebackgroundcolor={
+          \ifnum\value{lstnumber}=6\color{mono}\fi
+          \ifnum\value{lstnumber}=7\color{mono}\fi
+        }
+      ]
+static final Hashing H1 = new MyHashing1();
+static final Hashing H2 = new MyHashing2();
+
+long ultrahash2(long d) {
+  return
+    H1.hash(d)
+    + H2.hash(d);
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Clase abstracta: inlining (2)}
+    \begin{lstlisting}[basicstyle=\tiny]
+HashingKernel64::hash (30 bytes)   made not entrant
+@ 1   MyHashing2::newKernel (8 bytes)   inline (hot)
+@ 1   MyHashing1::newKernel (8 bytes)   inline (hot)
+ \-> TypeProfile (8702/17405 counts) = MyHashing1
+ \-> TypeProfile (8703/17405 counts) = MyHashing2
+  @ 4   MyKernel1::<init> (6 bytes)   inline (hot)
+    @ 2   MyKernel1::<init> (15 bytes)   inline (hot)
+      @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 4   MyKernel2::<init> (6 bytes)   inline (hot)
+    @ 2   MyKernel2::<init> (15 bytes)   inline (hot)
+      @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+@ 7   MyKernel2::block (11 bytes)   inline (hot)
+@ 7   MyKernel1::block (11 bytes)   inline (hot)
+ \-> TypeProfile (8702/17405 counts) = MyKernel1
+ \-> TypeProfile (8703/17405 counts) = MyKernel2
+@ 18   MyKernel2::tail (14 bytes)   inline (hot)
+@ 18   MyKernel1::tail (14 bytes)   inline (hot)
+ \-> TypeProfile (8702/17405 counts) = MyKernel1
+ \-> TypeProfile (8703/17405 counts) = MyKernel2
+@ 24   MyKernel2::hash (5 bytes)   accessor
+@ 24   MyKernel1::hash (5 bytes)   accessor
+ \-> TypeProfile (8702/17405 counts) = MyKernel1
+ \-> TypeProfile (8703/17405 counts) = MyKernel2
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  %\frametitle{\ft}
+  \begin{block}{Uso monomórfico: inlining (2)}
+    \begin{lstlisting}[basicstyle=\tiny]
+ultrahash2 @ 54 (147 bytes)   made not entrant
+@ 75   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing1::newKernel (8 bytes)   inline (hot)
+    ...
+  @ 7   MyKernel2::block (11 bytes)   inline (hot)
+  @ 7   MyKernel1::block (11 bytes)   inline (hot)
+   \-> TypeProfile (13620/27241 counts) = MyKernel1
+   \-> TypeProfile (13621/27241 counts) = MyKernel2
+  @ 18   MyKernel2::tail (14 bytes)   inline (hot)
+  @ 18   MyKernel1::tail (14 bytes)   inline (hot)
+   \-> TypeProfile (13620/27241 counts) = MyKernel1
+   \-> TypeProfile (13621/27241 counts) = MyKernel2
+  @ 24   MyKernel2::hash64 (5 bytes)   accessor
+  @ 24   MyKernel1::hash64 (5 bytes)   accessor
+   \-> TypeProfile (13620/27241 counts) = MyKernel1
+   \-> TypeProfile (13621/27241 counts) = MyKernel2
+@ 85   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing2::newKernel (8 bytes)   inline (hot)
+    ...
+  @ 7   MyKernel2::block (11 bytes)   inline (hot)
+  @ 7   MyKernel1::block (11 bytes)   inline (hot)
+   \-> TypeProfile (13620/27241 counts) = MyKernel1
+   \-> TypeProfile (13621/27241 counts) = MyKernel2
+  @ 18   MyKernel2::tail (14 bytes)   inline (hot)
+  @ 18   MyKernel1::tail (14 bytes)   inline (hot)
+   \-> TypeProfile (13620/27241 counts) = MyKernel1
+   \-> TypeProfile (13621/27241 counts) = MyKernel2
+  @ 24   MyKernel2::hash64 (5 bytes)   accessor
+  @ 24   MyKernel1::hash64 (5 bytes)   accessor
+   \-> TypeProfile (13620/27241 counts) = MyKernel1
+   \-> TypeProfile (13621/27241 counts) = MyKernel2
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Uso monomórfico (3)}
+    \begin{lstlisting}[
+        language=java,
+        linebackgroundcolor={
+          \ifnum\value{lstnumber}=7\color{mono}\fi
+          \ifnum\value{lstnumber}=8\color{mono}\fi
+          \ifnum\value{lstnumber}=9\color{mono}\fi
+        }
+      ]
+static final Hashing H1 = new MyHashing1();
+static final Hashing H2 = new MyHashing2();
+static final Hashing H3 = new MyHashing3();
+
+long ultrahash3(long d) {
+  return
+    H1.hash(d)
+    + H2.hash(d)
+    + H3.hash(d);
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Clase abstracta: inlining (3)}
+    \begin{lstlisting}[basicstyle=\tiny]
+HashingKernel64::hash (30 bytes)   made not entrant
+@ 1   HashingKernel64::newKernel (0 bytes)   failed to inline: virtual call
+@ 7   Kernel64::block (0 bytes)   failed to inline: virtual call
+@ 18   Kernel64::tail (0 bytes)   failed to inline: virtual call
+@ 24   Hash::hash64 (10 bytes)   failed to inline: virtual call
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Uso monomórfico: inlining (3)}
+    \begin{lstlisting}[basicstyle=\tiny]
+ultrahash3 @ 54 (158 bytes)   made not entrant
+@ 75   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing1::newKernel (8 bytes)   inline (hot)
+    @ 4   MyKernel1::<init> (6 bytes)   inline (hot)
+      @ 2   MyKernel1::<init> (15 bytes)   inline (hot)
+        @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 7   Kernel64::block (0 bytes)   virtual call
+  @ 18   Kernel64::tail (0 bytes)   virtual call
+  @ 24   Hash::hash64 (10 bytes)   virtual call
+@ 85   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing2::newKernel (8 bytes)   inline (hot)
+    @ 4   MyKernel2::<init> (6 bytes)   inline (hot)
+      @ 2   MyKernel2::<init> (15 bytes)   inline (hot)
+        @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 7   Kernel64::block (0 bytes)   virtual call
+  @ 18   Kernel64::tail (0 bytes)   virtual call
+  @ 24   Hash::hash64 (10 bytes)   virtual call
+@ 96   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing3::newKernel (8 bytes)   inline (hot)
+    @ 4   MyKernel3::<init> (6 bytes)   inline (hot)
+      @ 2   MyKernel3::<init> (15 bytes)   inline (hot)
+        @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 7   Kernel64::block (0 bytes)   virtual call
+  @ 18   Kernel64::tail (0 bytes)   virtual call
+  @ 24   Hash::hash64 (10 bytes)   virtual call
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Monstruo 4: el splitting}
+    \begin{itemize}
+    \item Splitting: Intenta eliminar los puntos polimórficos buscando
+      un punto de llamada anterior monomórfico
+    \item ¿Lo tiene alguna JVM?
+    \item Pero un inlining {\it más precavido} tiene un efecto similar
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Uso monomórfico: C2 v21 al rescate (2)}
+    \begin{lstlisting}[basicstyle=\tiny]
+ultrahash2 @ 54 (147 bytes)   made not entrant
+@ 75   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing2::newKernel (8 bytes)   inline (hot)
+    @ 4   MyKernel1::<init> (6 bytes)   inline (hot)
+      @ 2   MyKernel1::<init> (15 bytes)   inline (hot)
+        @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 7   MyKernel1::block (11 bytes)   inline (hot)
+  @ 18   MyKernel1::tail (14 bytes)   inline (hot)
+  @ 24   MyKernel1::hash64 (5 bytes)   accessor
+@ 85   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing2::newKernel (8 bytes)   inline (hot)
+    @ 4   MyKernel2::<init> (6 bytes)   inline (hot)
+      @ 2   MyKernel2::<init> (15 bytes)   inline (hot)
+        @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 7   MyKernel2::block (11 bytes)   inline (hot)
+  @ 18   MyKernel2::tail (14 bytes)   inline (hot)
+  @ 24   MyKernel2::hash64 (5 bytes)   accessor
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Uso monomórfico: C2 v21 al rescate (3)}
+    \begin{lstlisting}[basicstyle=\tiny]
+ultrahash3 @ 54 (158 bytes)   made not entrant
+@ 75   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing3::newKernel (8 bytes)   inline (hot)
+    @ 4   MyKernel1::<init> (6 bytes)   inline (hot)
+      @ 2   MyKernel1::<init> (15 bytes)   inline (hot)
+        @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 7   MyKernel1::block (11 bytes)   inline (hot)
+  @ 18   MyKernel1::tail (14 bytes)   inline (hot)
+  @ 24   MyKernel1::hash64 (5 bytes)   accessor
+@ 85   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing3::newKernel (8 bytes)   inline (hot)
+    @ 4   MyKernel2::<init> (6 bytes)   inline (hot)
+      @ 2   MyKernel2::<init> (15 bytes)   inline (hot)
+        @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 7   MyKernel2::block (11 bytes)   inline (hot)
+  @ 18   MyKernel2::tail (14 bytes)   inline (hot)
+  @ 24   MyKernel2::hash64 (5 bytes)   accessor
+@ 96   HashingKernel64::hash (30 bytes)   inline (hot)
+  @ 1   MyHashing3::newKernel (8 bytes)   inline (hot)
+    @ 4   MyKernel3::<init> (6 bytes)   inline (hot)
+      @ 2   MyKernel3::<init> (15 bytes)   inline (hot)
+        @ 1   java.lang.Object::<init> (1 bytes)   inline (hot)
+  @ 7   MyKernel3::block (11 bytes)   inline (hot)
+  @ 18   MyKernel3::tail (14 bytes)   inline (hot)
+  @ 24   MyKernel3::hash64 (5 bytes)   accessor
+    \end{lstlisting}
+  \end{block}
+\end{frame}

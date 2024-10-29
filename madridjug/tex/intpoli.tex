@@ -1,0 +1,413 @@
+
+\def\ft{Polimorfismo intrínseco}
+
+% Objetivo: transformación de datos sin generación de basura
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Recodificación de datos}
+    \begin{lstlisting}[language=java]
+interface Parser {
+  Object parse(String val);
+}
+
+interface Marshaler {
+  void marshal(ByteBuffer bb, Object v);
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Recodificación de datos}
+    \begin{lstlisting}[language=java]
+class IntParser implements Parser {
+  Object parse(String val) {
+    return new Integer(Integer.parseInt(val));
+  }
+}
+
+class IntMarshaler implements Marshaler {
+  void marshal(ByteBuffer bb, Object v) {
+    bb.put((int) v);
+  }
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+% Inconvenientes:
+% - Dinámico
+% - Call site megamórfico
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Recodificación de datos dirigida por tipos}
+    \begin{lstlisting}[
+      language=java,
+      linebackgroundcolor={\ifnum\value{lstnumber}=6\color{poli}\fi}
+    ]
+void transfer(String[] types,
+      String[] vals, ByteBuffer trg) {
+  for (int i = 0; i < vals.length; i++) {
+    var par = UNIV.parserFor(types[i]);
+    var mar = UNIV.marshalerFor(types[i]);
+    mar.marshal(trg, par.parse(vals[i]))
+  }
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Aplicación parcial de la recodificación}
+    \begin{lstlisting}[
+      language=java,
+      linebackgroundcolor={\ifnum\value{lstnumber}=10\color{poli}\fi}
+    ]
+interface WidePipe {
+  transfer(String[] vals, ByteBuffer trg);
+}
+
+WidePipe transfer(String[] types) {
+  var pars = UNIV.parsersFor(types);
+  var mars = UNIV.marshalersFor(types);
+  return (vals, trg) -> {
+    for (int i = 0; i < vals.length; i++) {
+      mars[i].marshal(trg, pars[i].parse(vals[i]));
+    }
+  };
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+  %\frametitle{\ft}
+  \begin{block}{Generalización de la aplicación parcial}
+    \begin{lstlisting}[
+      language=java,
+      basicstyle=\tiny,
+      linebackgroundcolor={
+        \ifnum\value{lstnumber}=5\color{poli}\fi
+        \ifnum\value{lstnumber}=20\color{mono}\fi
+      }
+    ]
+interface Pipe {
+  transfer(String val, ByteBuffer trg);
+}
+Pipe pipe(Parser par, Marshaler mar) {
+  return (val, trg) -> mar.marshal(trg, par.parse(val));
+}
+Pipe pipeFor(String type) {
+  return pipe(UNIV.parserFor(type), UNIV.marshalerFor(type));
+}
+Pipe[] pipesFor(String[] types) {
+  var pipes = new Pipe[types.length];
+  for (int i = 0; i < types.length; i++) {
+    pipes[i] = pipeFor(types[i]);
+  }
+  return pipes;
+}
+WidePipe compose(Pipe[] pipes) {
+  return (vals, trg) -> {
+    for (int i = 0; i < vals.length; i++) {
+      pipes[i].transfer(vals[i], trg)
+    }
+  };
+}
+WidePipe transfer(String[] types) {
+  return compose(pipesFor(types));
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Fuente del polimorfismo intrínseco}
+    \begin{lstlisting}[
+      language=java,
+      linebackgroundcolor={\ifnum\value{lstnumber}=2\color{poli}\fi}
+    ]
+Pipe pipe(Parser par, Marshaler mar) {
+  return (val, trg) -> mar.marshal(trg, par.parse(val));
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Fuente del polimorfismo intrínseco (modo clásico)}
+    \begin{lstlisting}[
+      language=java,
+      linebackgroundcolor={\ifnum\value{lstnumber}=13\color{poli}\fi}
+    ]
+Pipe pipe(Parser par, Marshaler mar) {
+  return new PMPipe(par, mar);
+}
+
+class PMPipe implements Pipe {
+  Parser par;
+  Marshaler mar;
+  PMPipe(Parser par, Marshaler mar) {
+    this.par = par;
+    this.mar = mar;
+  }
+  void transfer(String val, ByteBuffer trg) {
+    mar.marshal(trg, par.parse(val));
+  }
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Monstruo 5: \onslide<2>{ClassLoader}}
+  \begin{itemize}
+  \item Hay que generar una implementación de {\tt Pipe} para cada tipo
+  \item Siempre sería el código exacto de {\tt PMPipe}
+  \item Soluciones
+    \onslide<2>{\begin{itemize}
+    \item A mano
+    \item Generación de bytecode: ASM, class-file API, ...
+    \item java.lang.invoke.LambdaMetafactory
+    \item ClassLoader
+    \end{itemize}}
+  \end{itemize}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Pipe factory}
+    \begin{lstlisting}[
+      language=java,
+      linebackgroundcolor={
+        \ifnum\value{lstnumber}=3\color{mono}\fi
+        \ifnum\value{lstnumber}=4\color{mono}\fi
+        \ifnum\value{lstnumber}=8\color{mono}\fi
+      }
+    ]
+class PipeFactory {
+  Map<String,Constructor<Pipe>> byType = new HashMap<>();
+  BoundedSpecializer spec
+    = new BoundedSpecializer(Pipe.class);
+
+  Pipe pipeFor(String type, Parser par, Marshaler mar) {
+    Constructor<Pipe> con = byType.computeIfAbsent(type,
+      key -> spec.specialized(PMPipe.class)
+        .getConstructor(Parser.class, Marshaler.class));
+    return (Pipe) con.newInstance(par, mar);
+  }
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Transferencia del polimorfismo}
+    \begin{lstlisting}[
+      language=java,
+      linebackgroundcolor={\ifnum\value{lstnumber}=9\color{poli}\fi}
+    ]
+Pipe pipeFor(String type) {
+  return PipeFactory.getInstance().pipeFor(
+    type, UNIV.parserFor(type), UNIV.marshalerFor(type));
+}
+
+WidePipe compose(Pipe[] pipes) {
+  return (vals, trg) -> {
+    for (int i = 0; i < vals.length; i++) {
+      pipes[i].transfer(vals[i], trg)
+    }
+  };
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{BoundedSpecializer}
+    \begin{lstlisting}[language=java]
+class BoundedSpecializer {
+  ClassSet toSpecialize;
+  BoundedSpecializer(Class<?>... root) {
+    this.toSpecialize = new HierarchyClassSet(root);
+  }
+
+  Class<?> specialized(Class<?> klass) {
+    return toSpecialize.contains(klass)
+      ? reload(klass.getName())
+      : unmanagedClassError(klass.getName());
+  }
+
+  Class<?> reload(String classname)
+  throws ClassNotFoundException {
+    return new SpecializingClassLoader(toSpecialize)
+      .loadClass(classname);
+  }
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  %\frametitle{\ft}
+  \begin{block}{SpecializingClassLoader}
+    \begin{lstlisting}[language=java]
+class SpecializingClassLoader extends ClassLoader {
+  ClassSet toLoad;
+  SpecializingClassLoader(ClassSet toLoad) {
+    this.toLoad = toLoad;
+  }
+
+  Class<?> loadClass(String name, boolean resolve) {
+    Class<?> klass = findLoadedClass(name);
+    if (klass == null) {
+      klass = toLoad.contains(name) ? loadCopy(name)
+        : super.loadClass(name, false);
+    }
+    if (resolve) resolveClass(klass);
+    return klass;
+  }
+
+  Class<?> loadCopy(String name) {
+    byte[] bytecode = readResource(name);
+    return defineClass(name, bytecode, 0, bytecode.length);
+  }
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Parcheando C2 v17}
+    \begin{lstlisting}[language=java]
+static final Hashing H1;
+static final Hashing H2;
+static final Hashing H3;
+static {
+  var spec = new BoundedSpecializer(Hashing.class);
+  H1 = (Hashing) spec.specialized(MyHashing1.class)
+         .newInstance();
+  H2 = (Hashing) spec.specialized(MyHashing2.class)
+         .newInstance();
+  H2 = (Hashing) spec.specialized(MyHashing3.class)
+         .newInstance();
+}
+
+long ultrahash3(long d) {
+  return h1.hash(d) + h2.hash(d) + h3.hash(d);
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Ejercicio de clase}
+    ¿{\tt new Integer} o {\tt Integer.valueOf} o nada?
+    \begin{onlyenv}<1>
+    \begin{lstlisting}[language=java]
+class IntParser {
+  Object parse(String val) {
+    return new Integer(Integer.parseInt(val));
+  }
+}
+    \end{lstlisting}
+    \end{onlyenv}
+    \begin{onlyenv}<3>
+    \begin{lstlisting}[language=java]
+class IntParser {
+  Object parse(String val) {
+    return Integer.parseInt(val);
+  }
+}
+    \end{lstlisting}
+    \end{onlyenv}
+    \begin{onlyenv}<2,4>
+    \begin{lstlisting}[language=java]
+class IntParser {
+  Object parse(String val) {
+    return Integer.valueOf(Integer.parseInt(val));
+  }
+}
+    \end{lstlisting}
+    \end{onlyenv}
+
+    \begin{visibleenv}<4>
+    \begin{lstlisting}[language=java]
+public class Integer {
+  ...
+  static Integer valueOf(int i) {
+    if (i >= IntegerCache.low && i <= IntegerCache.high)
+        return IntegerCache.cache[i + (-IntegerCache.low)];
+    return new Integer(i);
+  }
+  ...
+}
+    \end{lstlisting}
+    \end{visibleenv}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Ejercicio para casa}
+    ¿Qué pasa si un parseador puede devolver {\tt null}?
+    \begin{lstlisting}[language=java]
+class IntParser {
+  Object parse(String val) {
+    try {
+      return new Integer(Integer.parseInt(val));
+    } catch (NumberFormatException e) {
+      return null;
+    }
+  }
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+  \frametitle{\ft}
+  \begin{block}{Ejercicio para casa}
+  Reescribir {\tt compose} para que la llamada a {\tt transfer} sea
+  monomórfica
+    \begin{lstlisting}[
+      language=java,
+      linebackgroundcolor={\ifnum\value{lstnumber}=9\color{poli}\fi}
+    ]
+Pipe pipeFor(String type) {
+  return PipeFactory.getInstance().pipeFor(
+    type, UNIV.parserFor(type), UNIV.marshalerFor(type));
+}
+
+WidePipe compose(Pipe[] pipes) {
+  return (vals, trg) -> {
+    for (int i = 0; i < vals.length; i++) {
+      pipes[i].transfer(vals[i], trg)
+    }
+  };
+}
+    \end{lstlisting}
+  \end{block}
+\end{frame}
