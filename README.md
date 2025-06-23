@@ -4,7 +4,7 @@ Información sobre Stack Allocation / Scalar Replacement (SR)
 Prontuario
 ----------------------------------------------------------------------
 
-- La charla en [MadridJUG](madridjug/main.pdf).
+- La charla en [MadridJUG](madridjug/tex/main.pdf).
 
 - [Algo de bibliografía](bib).
 
